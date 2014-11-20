@@ -41,4 +41,11 @@
             android:layout_height="60dip" />
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/snapshort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|right"
+        android:background="@drawable/video_shot_icon" />
+
 </FrameLayout>

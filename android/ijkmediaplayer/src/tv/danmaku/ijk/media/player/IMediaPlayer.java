@@ -18,9 +18,9 @@ package tv.danmaku.ijk.media.player;
 
 import java.io.IOException;
 
-
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -75,6 +75,8 @@ public interface IMediaPlayer {
 
     public abstract long getCurrentPosition();
 
+    public abstract boolean getCurrentFrame(Bitmap bitmap);
+    
     public abstract long getDuration();
 
     public abstract void release();

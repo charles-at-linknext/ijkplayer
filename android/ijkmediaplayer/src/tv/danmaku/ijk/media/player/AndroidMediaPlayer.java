@@ -22,6 +22,7 @@ import java.lang.ref.WeakReference;
 
 import tv.danmaku.ijk.media.player.pragma.DebugLog;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -163,6 +164,12 @@ public class AndroidMediaPlayer extends SimpleMediaPlayer {
         mInternalMediaPlayer.seekTo((int) msec);
     }
 
+    @Override
+    public boolean getCurrentFrame(Bitmap bitmap) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    
     @Override
     public long getCurrentPosition() {
         try {

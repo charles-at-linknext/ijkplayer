@@ -65,6 +65,7 @@ public class VideoView extends SurfaceView implements
     private Uri mUri;
     private long mDuration;
     private String mUserAgent;
+    private String mRtspTransport;
 
     private static final int STATE_ERROR = -1;
     private static final int STATE_IDLE = 0;
@@ -221,6 +222,10 @@ public class VideoView extends SurfaceView implements
     	mUserAgent = ua;
     }
     
+    public void setRtspTransport(String transport) {
+    	mRtspTransport = transport;
+    }
+    
     public void stopPlayback() {
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
@@ -254,6 +259,10 @@ public class VideoView extends SurfaceView implements
                 ijkMediaPlayer.setFrameDrop(12);
                 if (mUserAgent != null) {
                     ijkMediaPlayer.setAvFormatOption("user_agent", mUserAgent);
+                }
+                
+                if (mRtspTransport != null) {
+                	ijkMediaPlayer.setAvFormatOption("rtsp_transport", mRtspTransport);
                 }
             }
             mMediaPlayer = ijkMediaPlayer;

@@ -66,6 +66,7 @@ public class VideoView extends SurfaceView implements
     private long mDuration;
     private String mUserAgent;
     private String mRtspTransport;
+    private boolean mHwDecoder;
 
     private static final int STATE_ERROR = -1;
     private static final int STATE_IDLE = 0;
@@ -226,6 +227,10 @@ public class VideoView extends SurfaceView implements
     	mRtspTransport = transport;
     }
     
+    public void setHwDecoder(boolean enabled) {
+    	mHwDecoder = enabled;
+    }
+    
     public void stopPlayback() {
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
@@ -264,6 +269,7 @@ public class VideoView extends SurfaceView implements
                 if (mRtspTransport != null) {
                 	ijkMediaPlayer.setAvFormatOption("rtsp_transport", mRtspTransport);
                 }
+                ijkMediaPlayer.setMediaCodecEnabled(mHwDecoder);
             }
             mMediaPlayer = ijkMediaPlayer;
             mMediaPlayer.setOnPreparedListener(mPreparedListener);

@@ -37,6 +37,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.util.AttributeSet;
@@ -630,6 +631,13 @@ public class VideoView extends SurfaceView implements
         } else if (mCurrentState == STATE_SUSPEND_UNSUPPORTED) {
             openVideo();
         }
+    }
+    
+    public boolean getCurrentFrame(Bitmap bitmap) {
+        if (mMediaPlayer != null) {
+            return mMediaPlayer.getCurrentFrame(bitmap);
+        }
+        return false;
     }
 
     @Override

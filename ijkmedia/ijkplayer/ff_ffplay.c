@@ -3198,6 +3198,32 @@ long ffp_get_current_position_l(FFPlayer *ffp)
     return (long)adjust_pos;
 }
 
+void ffp_get_current_frame_l(FFPlayer *ffp, uint8_t *frame_buf)
+{
+	ALOGD("=============>start snapshot\n");
+
+	VideoState *is = ffp->is;
+	Frame *vp;
+	int i = 0, linesize = 0, pixels = 0;
+	uint8_t *src;
+
+	vp = &is->pictq.queue[is->pictq.rindex];
+	int height = vp->bmp->h;
+	int width = vp->bmp->w;
+
+	ALOGD("=============>%d X %d === %d\n", width, height, vp->bmp->pitches[0]);
+
+	// copy data to bitmap in java code
+	linesize = vp->bmp->pitches[0];
+	src = vp->bmp->pixels[0];
+	pixels = width * 4;
+	for (i = 0; i < height; i++) {
+		memcpy(frame_buf + i * pixels, src + i * linesize, pixels);
+	}
+	
+	ALOGD("=============>end snapshot\n");
+}
+
 long ffp_get_duration_l(FFPlayer *ffp)
 {
     assert(ffp);

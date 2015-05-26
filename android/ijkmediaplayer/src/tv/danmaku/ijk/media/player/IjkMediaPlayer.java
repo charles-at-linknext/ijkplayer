@@ -30,6 +30,7 @@ import tv.danmaku.ijk.media.player.pragma.DebugLog;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -379,11 +380,14 @@ public final class IjkMediaPlayer extends SimpleMediaPlayer {
     public native void seekTo(long msec) throws IllegalStateException;
 
     @Override
+    public native boolean getCurrentFrame(Bitmap bitmap);
+    
+    @Override
     public native long getCurrentPosition();
 
     @Override
     public native long getDuration();
-
+    
     /**
      * Releases resources associated with this IjkMediaPlayer object. It is
      * considered good practice to call this method when you're done using the

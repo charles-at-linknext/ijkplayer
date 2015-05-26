@@ -34,6 +34,7 @@
 #include "ijksdl/android/android_bundle.h"
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "ijksdl/android/ijksdl_codec_android_mediadef.h"
+#include <android/bitmap.h>
 
 #define JNI_MODULE_PACKAGE      "tv/danmaku/ijk/media/player"
 #define JNI_CLASS_IJKPLAYER     "tv/danmaku/ijk/media/player/IjkMediaPlayer"
@@ -216,6 +217,32 @@ IjkMediaPlayer_isPlaying(JNIEnv *env, jobject thiz)
 
     LABEL_RETURN:
     ijkmp_dec_ref_p(&mp);
+    return retval;
+}
+
+static jboolean
+IjkMediaPlayer_getCurrentFrame(JNIEnv *env, jobject thiz, jobject bitmap)
+{
+	jboolean retval = JNI_TRUE;
+	IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
+	JNI_CHECK_GOTO(mp, env, NULL, "mpjni: getCurrentFrame: null mp", LABEL_RETURN);
+
+	uint8_t *frame_buffer = NULL;
+
+	if (0 > AndroidBitmap_lockPixels(env, bitmap, (void **)&frame_buffer)) {
+		(*env)->ThrowNew(env, "java/io/IOException", "Unable to lock pixels.");
+		return JNI_FALSE;
+	}
+
+	ijkmp_get_current_frame(mp, frame_buffer);
+
+	if (0 > AndroidBitmap_unlockPixels(env, bitmap)) {
+		(*env)->ThrowNew(env, "java/io/IOException", "Unable to unlock pixels.");
+		return JNI_FALSE;
+	}
+
+	LABEL_RETURN:
+	ijkmp_dec_ref_p(&mp);
     return retval;
 }
 
@@ -890,6 +917,9 @@ static JNINativeMethod g_methods[] = {
     { "native_init", "()V", (void *) IjkMediaPlayer_native_init },
     { "native_setup", "(Ljava/lang/Object;)V", (void *) IjkMediaPlayer_native_setup },
     { "native_finalize", "()V", (void *) IjkMediaPlayer_native_finalize },
+
+	// snapshot
+	{ "getCurrentFrame", "(Landroid/graphics/Bitmap;)Z", (void *) IjkMediaPlayer_getCurrentFrame },
 
     { "_setAvFormatOption", "(Ljava/lang/String;Ljava/lang/String;)V", (void *) IjkMediaPlayer_setAvFormatOption },
     { "_setAvCodecOption", "(Ljava/lang/String;Ljava/lang/String;)V", (void *) IjkMediaPlayer_setAvCodecOption },

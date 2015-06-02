@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Zhang Rui <bbcallen@gmail.com>
+ * Copyright (C) 2015 Gdier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,20 @@
 
 #import <Foundation/Foundation.h>
 
-#define IOS_OLDER_THAN_6 ( [ [ [ UIDevice currentDevice ] systemVersion ] floatValue ] < 6.0 )
-#define IOS_NEWER_OR_EQUAL_TO_6 ( [ [ [ UIDevice currentDevice ] systemVersion ] floatValue ] >= 6.0 )
-#define IOS_NEWER_OR_EQUAL_TO_7 ( [ [ [ UIDevice currentDevice ] systemVersion ] floatValue ] >= 7.0 )
+@interface IJKDemoHistoryItem : NSObject <NSCoding>
+
+@property(nonatomic,strong) NSString *title;
+@property(nonatomic,strong) NSURL *url;
+
+@end
+
+@interface IJKDemoHistory : NSObject
+
++ (instancetype)instance;
+
+@property(nonatomic,strong,readonly) NSArray *list;
+
+- (void)removeAtIndex:(NSUInteger)index;
+- (void)add:(IJKDemoHistoryItem *)item;
+
+@end

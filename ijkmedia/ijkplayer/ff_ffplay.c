@@ -64,6 +64,54 @@ static int64_t g_vdps_total_time = 0;
 static int ffp_format_control_message(struct AVFormatContext *s, int type,
                                       void *data, size_t data_size);
 
+#define OPTION_OFFSET(x) offsetof(FFPlayer, x)
+#define OPTION_INT(default__, min__, max__) \
+    .type = AV_OPT_TYPE_INT, \
+    { .i64 = default__ }, \
+    .min = min__, \
+    .max = max__, \
+    .flags = AV_OPT_FLAG_DECODING_PARAM
+
+#define OPTION_CONST(default__) \
+    .type = AV_OPT_TYPE_CONST, \
+    { .i64 = default__ }, \
+    .min = INT_MIN, \
+    .max = INT_MAX, \
+    .flags = AV_OPT_FLAG_DECODING_PARAM
+
+static const AVOption ffp_context_options[] = {
+    // original options in ffplay.c
+    { "framedrop",                      "drop frames when cpu is too slow",
+        OPTION_OFFSET(framedrop),       OPTION_INT(0, -1, 1) },
+
+    // extended options in ff_ffplay.c
+    { "max-fps",                        "drop frames in video whose fps is greater than max-fps",
+        OPTION_OFFSET(max_fps),         OPTION_INT(31, 0, 121) },
+
+    { "overlay-format",                 "fourcc of overlay format",
+        OPTION_OFFSET(overlay_format),  OPTION_INT(SDL_FCC_RV32, INT_MIN, INT_MAX),
+        .unit = "overlay-format" },
+    { "fcc-i420",                       "", 0, OPTION_CONST(SDL_FCC_I420), .unit = "overlay-format" },
+    { "fcc-yv12",                       "", 0, OPTION_CONST(SDL_FCC_YV12), .unit = "overlay-format" },
+    { "fcc-rv16",                       "", 0, OPTION_CONST(SDL_FCC_RV16), .unit = "overlay-format" },
+    { "fcc-rv23",                       "", 0, OPTION_CONST(SDL_FCC_RV24), .unit = "overlay-format" },
+    { "fcc-rv32",                       "", 0, OPTION_CONST(SDL_FCC_RV32), .unit = "overlay-format" },
+
+    { "start-on-prepared",                  "automatically start playing on prepared",
+        OPTION_OFFSET(start_on_prepared),   OPTION_INT(1, 0, 1) },
+
+    { "video-pictq-size",                   "max picture queue frame count",
+        OPTION_OFFSET(pictq_size),          OPTION_INT(VIDEO_PICTURE_QUEUE_SIZE_DEFAULT,
+                                                       VIDEO_PICTURE_QUEUE_SIZE_MIN,
+                                                       VIDEO_PICTURE_QUEUE_SIZE_MAX) },
+
+    { "max-buffer-size",                    "max buffer size should be pre-read",
+        OPTION_OFFSET(max_buffer_size),     OPTION_INT(MAX_QUEUE_SIZE, 0, MAX_QUEUE_SIZE) },
+
+    { NULL }
+};
+#undef OPTION_INT
+#undef OPTION_OFFSET
 
 #define FFP_BUF_MSG_PERIOD (3)
 
@@ -2393,7 +2441,7 @@ static int read_thread(void *arg)
     if (ffp->infinite_buffer < 0 && is->realtime)
         ffp->infinite_buffer = 1;
 
-    if (!ffp->auto_play_on_prepared)
+    if (!ffp->start_on_prepared)
         toggle_pause(ffp, 1);
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);
@@ -2402,7 +2450,7 @@ static int read_thread(void *arg)
         ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, avctx->width, avctx->height);
         ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, avctx->sample_aspect_ratio.num, avctx->sample_aspect_ratio.den);
     }
-    if (!ffp->auto_play_on_prepared) {
+    if (!ffp->start_on_prepared) {
         while (is->paused && !is->abort_request) {
             SDL_Delay(100);
         }
@@ -2914,6 +2962,31 @@ void ffp_io_stat_complete_register(void (*cb)(const char *url,
     // avijk_io_stat_complete_register(cb);
 }
 
+static const char *ffp_context_to_name(void *ptr)
+{
+    return "FFPlayer";
+}
+
+
+static void *ffp_context_child_next(void *obj, void *prev)
+{
+    return NULL;
+}
+
+static const AVClass *ffp_context_child_class_next(const AVClass *prev)
+{
+    return NULL;
+}
+
+const AVClass ffp_context_class = {
+    .class_name       = "FFPlayer",
+    .item_name        = ffp_context_to_name,
+    .option           = ffp_context_options,
+    .version          = LIBAVUTIL_VERSION_INT,
+    .child_next       = ffp_context_child_next,
+    .child_class_next = ffp_context_child_class_next,
+};
+
 FFPlayer *ffp_create()
 {
     FFPlayer* ffp = (FFPlayer*) av_mallocz(sizeof(FFPlayer));
@@ -2922,7 +2995,11 @@ FFPlayer *ffp_create()
 
     msg_queue_init(&ffp->msg_queue);
     ffp_reset_internal(ffp);
+    ffp->av_class = &ffp_context_class;
     ffp->meta = ijkmeta_create();
+
+    av_opt_set_defaults(ffp);
+
     return ffp;
 }
 
@@ -2965,28 +3042,37 @@ void ffp_set_format_callback(FFPlayer *ffp, ijk_format_control_message cb, void 
     ffp->format_control_opaque  = opaque;
 }
 
-void ffp_set_format_option(FFPlayer *ffp, const char *name, const char *value)
+static AVDictionary **ffp_get_opt_dict(FFPlayer *ffp, int opt_category)
 {
-    if (!ffp)
-        return;
+    assert(ffp);
 
-    av_dict_set(&ffp->format_opts, name, value, 0);
+    switch (opt_category) {
+        case FFP_OPT_CATEGORY_FORMAT:   return &ffp->format_opts;
+        case FFP_OPT_CATEGORY_CODEC:    return &ffp->codec_opts;
+        case FFP_OPT_CATEGORY_SWS:      return &ffp->sws_opts;
+        case FFP_OPT_CATEGORY_PLAYER:   return &ffp->player_opts;
+        default:
+            ALOGE("unknown option category %d\n", opt_category);
+            return NULL;
+    }
 }
 
-void ffp_set_codec_option(FFPlayer *ffp, const char *name, const char *value)
+void ffp_set_option(FFPlayer *ffp, int opt_category, const char *name, const char *value)
 {
     if (!ffp)
         return;
 
-    av_dict_set(&ffp->codec_opts, name, value, 0);
+    AVDictionary **dict = ffp_get_opt_dict(ffp, opt_category);
+    av_dict_set(dict, name, value, 0);
 }
 
-void ffp_set_sws_option(FFPlayer *ffp, const char *name, const char *value)
+void ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64_t value)
 {
     if (!ffp)
         return;
 
-    av_dict_set(&ffp->sws_opts, name, value, 0);
+    AVDictionary **dict = ffp_get_opt_dict(ffp, opt_category);
+    av_dict_set_int(dict, name, value, 0);
 }
 
 void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
@@ -3003,34 +3089,6 @@ void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
             ALOGE("ffp_set_overlay_format: unknown chroma fourcc: %d\n", chroma_fourcc);
             break;
     }
-}
-
-void ffp_set_picture_queue_capicity(FFPlayer *ffp, int frame_count)
-{
-    ffp->pictq_size = frame_count;
-}
-
-void ffp_set_max_fps(FFPlayer *ffp, int max_fps)
-{
-    ffp->max_fps = max_fps;
-}
-
-void ffp_set_framedrop(FFPlayer *ffp, int framedrop)
-{
-    ffp->framedrop = framedrop;
-}
-
-void ffp_set_auto_play_on_prepared(FFPlayer *ffp, int auto_play_on_prepared)
-{
-    ffp->auto_play_on_prepared = auto_play_on_prepared;
-}
-
-void ffp_set_max_buffer_size(FFPlayer *ffp, int max_buffer_size)
-{
-    if (max_buffer_size < 0 || max_buffer_size > MAX_QUEUE_SIZE)
-        ffp->max_buffer_size = MAX_QUEUE_SIZE;
-    else
-        ffp->max_buffer_size = max_buffer_size;
 }
 
 int ffp_get_video_codec_info(FFPlayer *ffp, char **codec_info)
@@ -3061,11 +3119,29 @@ int ffp_get_audio_codec_info(FFPlayer *ffp, char **codec_info)
     return 0;
 }
 
+static void ffp_show_dict(const char *tag, AVDictionary *dict)
+{
+    AVDictionaryEntry *t = NULL;
+
+    while ((t = av_dict_get(dict, "", t, AV_DICT_IGNORE_SUFFIX))) {
+        av_log(NULL, AV_LOG_INFO, "%-*s: %-*s = %s\n", 12, tag, 20, t->key, t->value);
+    }
+}
+
 int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
 {
     assert(ffp);
     assert(!ffp->is);
     assert(file_name);
+
+    av_log(NULL, AV_LOG_INFO, "===== options =====\n");
+    ffp_show_dict("player-opts", ffp->player_opts);
+    ffp_show_dict("format-opts", ffp->format_opts);
+    ffp_show_dict("codec-opts ", ffp->codec_opts);
+    ffp_show_dict("sws-opts   ", ffp->sws_opts);
+    av_log(NULL, AV_LOG_INFO, "===================\n");
+
+    av_opt_set_dict(ffp, &ffp->player_opts);
 
     VideoState *is = stream_open(ffp, file_name, NULL);
     if (!is) {

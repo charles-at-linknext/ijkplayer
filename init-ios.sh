@@ -18,7 +18,7 @@
 # IJK_FFMPEG_UPSTREAM=git://git.videolan.org/ffmpeg.git
 IJK_FFMPEG_UPSTREAM=https://github.com/Bilibili/FFmpeg.git
 IJK_FFMPEG_FORK=https://github.com/Bilibili/FFmpeg.git
-IJK_FFMPEG_COMMIT=ijk-r0.2.2-dev
+IJK_FFMPEG_COMMIT=ijk-r0.2.3-dev
 IJK_FFMPEG_LOCAL_REPO=extra/ffmpeg
 
 # gas-preprocessor backup
@@ -28,7 +28,7 @@ set -e
 TOOLS=tools
 
 echo "== pull gas-preprocessor base =="
-sh $TOOLS/pull-repo-base.sh git://git.libav.org/gas-preprocessor.git extra/gas-preprocessor
+sh $TOOLS/pull-repo-base.sh https://github.com/Bilibili/gas-preprocessor.git extra/gas-preprocessor
 
 echo "== pull ffmpeg base =="
 sh $TOOLS/pull-repo-base.sh $IJK_FFMPEG_UPSTREAM $IJK_FFMPEG_LOCAL_REPO

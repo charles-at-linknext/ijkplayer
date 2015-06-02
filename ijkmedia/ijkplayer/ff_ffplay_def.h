@@ -393,6 +393,8 @@ static SDL_Surface *screen;
 typedef struct IjkMediaMeta IjkMediaMeta;
 typedef struct IJKFF_Pipeline IJKFF_Pipeline;
 typedef struct FFPlayer {
+    const AVClass *av_class;
+
     /* ffplay context */
     VideoState *is;
 
@@ -400,6 +402,7 @@ typedef struct FFPlayer {
     AVDictionary *format_opts;
     AVDictionary *codec_opts;
     AVDictionary *sws_opts;
+    AVDictionary *player_opts;
 
     /* ffplay options specified by the user */
 #ifdef FFP_MERGE
@@ -485,7 +488,7 @@ typedef struct FFPlayer {
     int auto_resume;
     int error;
     int error_count;
-    int auto_play_on_prepared;
+    int start_on_prepared;
 
     MessageQueue msg_queue;
 
@@ -519,6 +522,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     av_dict_free(&ffp->format_opts);
     av_dict_free(&ffp->codec_opts);
     av_dict_free(&ffp->sws_opts);
+    av_dict_free(&ffp->player_opts);
 
     /* ffplay options specified by the user */
     av_freep(&ffp->input_filename);
@@ -537,7 +541,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->decoder_reorder_pts    = -1;
     ffp->autoexit               = 0;
     ffp->loop                   = 1;
-    ffp->framedrop              = 0;
+    ffp->framedrop              = 0; // option
     ffp->infinite_buffer        = -1;
     ffp->show_mode              = SHOW_MODE_NONE;
     av_freep(&ffp->audio_codec_name);
@@ -575,7 +579,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->auto_resume            = 0;
     ffp->error                  = 0;
     ffp->error_count            = 0;
-    ffp->auto_play_on_prepared  = 1;
+    ffp->start_on_prepared      = 1;
 
     ffp->max_buffer_size                = MAX_QUEUE_SIZE;
     ffp->high_water_mark_in_bytes       = DEFAULT_HIGH_WATER_MARK_IN_BYTES;
@@ -587,8 +591,8 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
 
     ffp->playable_duration_ms           = 0;
 
-    ffp->pictq_size                     = VIDEO_PICTURE_QUEUE_SIZE_DEFAULT;
-    ffp->max_fps                        = VIDEO_MAX_FPS_DEFAULT;
+    ffp->pictq_size                     = VIDEO_PICTURE_QUEUE_SIZE_DEFAULT; // option
+    ffp->max_fps                        = 31; // option
 
     ffp->format_control_message = NULL;
     ffp->format_control_opaque  = NULL;

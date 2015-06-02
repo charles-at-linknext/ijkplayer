@@ -185,21 +185,22 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
         ijkmp_set_weak_thiz(_mediaPlayer, (__bridge_retained void *) self);
         ijkmp_set_format_callback(_mediaPlayer, format_control_message, (__bridge void *) self);
-        ijkmp_set_auto_play_on_prepared(_mediaPlayer, _shouldAutoplay);
+        ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
 
         // init video sink
-//        int chroma = SDL_FCC_RV24;
-        int chroma = SDL_FCC_I420;
         _glView = [[IJKSDLGLView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
         _view   = _glView;
 
         ijkmp_ios_set_glview(_mediaPlayer, _glView);
-        ijkmp_set_overlay_format(_mediaPlayer, chroma);
+        ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "overlay-format", "fcc-i420");
 
         // init audio sink
         [[IJKAudioKit sharedInstance] setupAudioSession:self];
 
         // apply ffmpeg options
+        if (options == nil) {
+            options = [IJKFFOptions optionsByDefault];
+        }
         [options applyTo:_mediaPlayer];
         _pauseInBackground = options.pauseInBackground;
 
@@ -232,7 +233,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
 
-    ijkmp_set_auto_play_on_prepared(_mediaPlayer, shouldAutoplay);
+    ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
 }
 
 - (BOOL)shouldAutoplay
@@ -248,7 +249,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     [self setScreenOn:_keepScreenOnWhilePlaying];
 
     ijkmp_set_data_source(_mediaPlayer, [_ffMrl.resolvedMrl UTF8String]);
-    ijkmp_set_format_option(_mediaPlayer, "safe", "0"); // for concat demuxer
+    ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", "0"); // for concat demuxer
     ijkmp_prepare_async(_mediaPlayer);
 }
 
@@ -306,7 +307,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
 
-    ijkmp_set_max_buffer_size(_mediaPlayer, maxBufferSize);
+    ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "max-buffer-size", maxBufferSize);
 }
 
 + (void)setLogReport:(BOOL)preferLogReport

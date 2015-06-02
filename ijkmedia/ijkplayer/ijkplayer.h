@@ -144,6 +144,11 @@ typedef struct SDL_Vout SDL_Vout;
 #define IJKMP_IO_STAT_READ 1
 
 
+#define IJKMP_OPT_CATEGORY_FORMAT FFP_OPT_CATEGORY_FORMAT
+#define IJKMP_OPT_CATEGORY_CODEC  FFP_OPT_CATEGORY_CODEC
+#define IJKMP_OPT_CATEGORY_SWS    FFP_OPT_CATEGORY_SWS
+#define IJKMP_OPT_CATEGORY_PLAYER FFP_OPT_CATEGORY_PLAYER
+
 
 void            ijkmp_global_init();
 void            ijkmp_global_uninit();
@@ -156,14 +161,30 @@ void            ijkmp_io_stat_complete_register(void (*cb)(const char *url,
 // ref_count is 1 after open
 IjkMediaPlayer *ijkmp_create(int (*msg_loop)(void*));
 void            ijkmp_set_format_callback(IjkMediaPlayer *mp, ijk_format_control_message cb, void *opaque);
+
+attribute_deprecated
 void            ijkmp_set_format_option(IjkMediaPlayer *mp, const char *name, const char *value);
+attribute_deprecated
 void            ijkmp_set_codec_option(IjkMediaPlayer *mp, const char *name, const char *value);
+attribute_deprecated
 void            ijkmp_set_sws_option(IjkMediaPlayer *mp, const char *name, const char *value);
+attribute_deprecated
+void            ijkmp_set_player_option(IjkMediaPlayer *mp, const char *name, const char *value);
+
+void            ijkmp_set_option(IjkMediaPlayer *mp, int opt_category, const char *name, const char *value);
+void            ijkmp_set_option_int(IjkMediaPlayer *mp, int opt_category, const char *name, int64_t value);
+
+attribute_deprecated
 void            ijkmp_set_overlay_format(IjkMediaPlayer *mp, int chroma_fourcc);
+attribute_deprecated
 void            ijkmp_set_picture_queue_capicity(IjkMediaPlayer *mp, int frame_count);
+attribute_deprecated
 void            ijkmp_set_max_fps(IjkMediaPlayer *mp, int max_fps);
+attribute_deprecated
 void            ijkmp_set_framedrop(IjkMediaPlayer *mp, int framedrop);
+attribute_deprecated
 void            ijkmp_set_auto_play_on_prepared(IjkMediaPlayer *mp, int auto_play_on_prepared);
+attribute_deprecated
 void            ijkmp_set_max_buffer_size(IjkMediaPlayer *mp, int max_buffer_size);
 
 int             ijkmp_get_video_codec_info(IjkMediaPlayer *mp, char **codec_info);

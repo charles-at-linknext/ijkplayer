@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Zhang Rui <bbcallen@gmail.com>
+ * Copyright (C) 2015 Gdier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
-#define IOS_OLDER_THAN_6 ( [ [ [ UIDevice currentDevice ] systemVersion ] floatValue ] < 6.0 )
-#define IOS_NEWER_OR_EQUAL_TO_6 ( [ [ [ UIDevice currentDevice ] systemVersion ] floatValue ] >= 6.0 )
-#define IOS_NEWER_OR_EQUAL_TO_7 ( [ [ [ UIDevice currentDevice ] systemVersion ] floatValue ] >= 7.0 )
+@interface IJKDemoLocalFolderViewController : UITableViewController
+
+- (instancetype)initWithFolderPath:(NSString *)folderPath;
+
+@end

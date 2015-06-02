@@ -29,7 +29,7 @@ ijkplayer
  - api: [MediaPlayer-like](android/ijkmediaplayer/src/tv/danmaku/ijk/media/player/IMediaPlayer.java)
  - video output: NativeWindow
  - audio output: OpenSL ES, AudioTrack
- - hw decoder: MediaCodec
+ - hw decoder: MediaCodec (API 16+, Android 4.1+)
 - iOS
  - platform: iOS 5.1.1~8.3.x
  - cpu: ARMv7, ARM64, i386, x86_64, (armv7s is obselete)
@@ -54,14 +54,22 @@ ijkplayer
 ### Before Build
 - If you prefer more codec/format
 ```
-rm config/module.sh
-ln -s config/module-default.sh config/module.sh
+cd config
+rm module.sh
+ln -s module-default.sh module.sh
+cd android
+# cd ios
+sh compile-ffmpeg clean
 ```
 
 - If you prefer less codec/format for smaller binary size (by default)
 ```
-rm config/module.sh
-ln -s config/module-lite.sh config/module.sh
+cd config
+rm module.sh
+ln -s module-lite.sh module.sh
+cd android
+# cd ios
+sh compile-ffmpeg clean
 ```
 
 - For Ubuntu/Debian users.
@@ -136,6 +144,13 @@ cd ios
 ```
 
 
+### Support (支持) ###
+- Although not all issues can be well resolved by me in time, but they are welcome, and could be resolved by other developers.
+- 能力所限，我个人无法及时有效解决所有问题，不过仍然欢迎[提交问题](https://github.com/bilibili/ijkplayer/issues)。考虑到某些问题有可能被老外大牛看到并解决，建议尽量用英文提问，以获得更多支持。
+- Please do not send e-mail to me. Public technical discussion on github is preferred.
+- 请尽量在 github 上公开讨论[技术问题](https://github.com/bilibili/ijkplayer/issues)，不要以邮件方式私下询问，恕不一一回复。
+
+
 ### Links
 - [FFmpeg_b4a](http://www.basic4ppc.com/android/forum/threads/ffmpeg_b4a-a-ffmpeg-library-for-b4a-decoding-streaming.44476/)
 - 中文
@@ -162,6 +177,8 @@ ijkplayer is based on or derives from projects below:
   - [libyuv](https://code.google.com/p/libyuv/)
 - ISC license
   - [libyuv/source/x86inc.asm](https://code.google.com/p/libyuv/source/browse/trunk/source/x86inc.asm)
+- Unknown license
+  - [iOS7-BarcodeScanner](https://github.com/jpwidmer/iOS7-BarcodeScanner)
 
 ijkplayer's build scripts are based on or derives from projects below:
 - [gas-preprocessor](http://git.libav.org/?p=gas-preprocessor.git)
